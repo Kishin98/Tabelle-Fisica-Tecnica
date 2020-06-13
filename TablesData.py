@@ -1,9 +1,7 @@
+import tkinter as tk
 import pandas as pd
 import os, re
 
-kelvin = re.compile(r'\d+(\.|\,)?\d+k$')
-celsius = re.compile(r'\d+(\.|\,)?\d+c$')
-findNumber = re.compile(r'(\d+(\.|\,))?\d+')
 commandPattern1 = re.compile(r'''(^f:(a|r)
                                 \so:(hl|hv|sl|sv|vl|vv|ps|ts)
                                 \s(p|t):(-?(\d+(\.|\,))?\d+)$
@@ -105,36 +103,44 @@ def findVHS(secondData, row, fluid, typeOfFirstData, operation):
     print('-' * os.get_terminal_size().columns)
     return result
 
-# f:a o:hl t:20      trovare hl dell'acqua con la temperatura
-# f:a o:sv p:2      trovare sv dell'acqua con la pressione
-# f:r o:x p:2 s:0.9222    trovare il titolo del R134a con pressione e entropia
-# f:as o:h p:2 t:250    trovare h dell'acqua surriscaldata con pressione e temperatura
-# f:as o:h p:2 s:6.7854  trovare h dell'acqua surriscaldata con pressione e entropia 
+def help():
+    print('-' * os.get_terminal_size().columns)
+    print('Valori accettabili:')
+    print('<Fluido> : a -> acqua satura; as -> acqua surriscaldata; r -> R134a saturo; rs -> R14a surriscaldato')
+    print('<Incognita> :\n'+
+    'h -> entalpia(bifase o surriscaldato); hl -> entalpia licquido saturo; hv -> entalpia vapore saturo\n' +
+    's -> entropia(bifase o surriscaldato); sl -> entropia liquido saturo; sv -> entropia vapore saturo\n' + 
+    'v -> volume specifico(bifase o surriscaldato); vl -> volume specifico liquido saturo; vv -> volume specifico vapore saturo\n' + 
+    'x -> titolo di vapore; ts -> temperatura di saturazione; ps -> pressione di saturazione')
+    print('Per <Dato1> e <Dato2> inserire la lettera corrispondente alla grandezza seguito dal valore numerico\n')
+    print('<Dato1>: p -> pressione [MPa]; t -> premperatura [°C]; NB: con as e rs si potrà fornire solo la pressione come primo dato di ingresso!')
+    print('<Dato2>: p -> pressione [MPa]; t -> premperatura [°C]; h -> entalpia [kj/kg]; s -> entropia [kj/kg*k]\n' + 
+    'v -> volume specifico [m^3/kg]; x -> titolo; NB: con as e rs è NON è possibile fornire la pressione e il titolo come secondo dato!')
+    print('-' * os.get_terminal_size().columns)
+    print('Esempi:')
+    print('<Fluido>:a <Incognita>:hl <Dato1>:t20    -> ottengo entalpia di liquido saturo dell\'acqua a 20°C')
+    print('<Fluido>:r <Incognita>:h <Dato1>:p2 <Dato2>:x0.87   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2MPa')
+    print('<Fluido>:as <Incognita>:h <Dato1>:p3 <Dato2>:t225   -> ottengo entalpia dell\'acqua surriscaldata a 3MPa e 225°C')
+    print('<Fluido>:a <Incognita>:h <Dato1>:p3 <Dato2>:s2.9635   -> ottengo entalpia dell\'acqua surriscaldata a 3MPa fornendo l\'entropia')
+    print('-' * os.get_terminal_size().columns)
 
-print('Istruzioni:')
-print('Se è necessario solo un dato in ingresso:')
-print('f:<fluido> o:<incognita da trovare> <primo dato>:<valore numerico>')
-print('Se sono necessari 2 dati in ingresso:')
-print('f:<fluido> o:<incognita da trovare> <primo dato>:<valore numerico> <secondo dato>:<valore numerico>')
-print('Valori accettabili:')
-print('<fluido> : a -> acqua satura; as -> acqua surriscaldata; r -> R134a saturo; rs -> R14a surriscaldato')
-print('<incognita da trovare> : h -> entalpia(bifase o surriscaldato); hl -> entalpia licquido saturo; hv -> entalpia vapore saturo\n'+
-'s -> entropia(bifase o surriscaldato); sl -> entropia liquido saturo; sv -> entropia vapore saturo\n' + 
-'v -> volume specifico(bifase o surriscaldato); vl -> volume specifico liquido saturo; vv -> volume specifico vapore saturo\n' + 
-'x -> titolo di vapore; ts -> temperatura di saturazione; ps -> pressione di saturazione')
-print('<primo dato>: p -> pressione [MPa]; t -> premperatura [°C]; NB: con as e rs si potrà fornire solo la pressione come primo dato di ingresso!')
-print('<secondo dato>: p -> pressione [MPa]; t -> premperatura [°C]; h -> entalpia [kj/kg]; s -> entropia [kj/kg*k]\n' + 
-'v -> volume specifico [m^3/kg]; x -> titolo; NB: con as e rs è NON è possibile fornire la pressione e il titolo come secondo dato!')
-print('-' * os.get_terminal_size().columns)
-print('Esempi:')
-print('f:a o:hl t:20    -> ottengo entalpia di liquido saturo dell\'acqua a 20°C')
-print('f:r o:h p:2 x:0.87   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2MPa')
-print('f:as o:h p:3 t:225   -> ottengo entalpia dell\'acqua surriscaldata a 3MPa e 225°C')
-print('-' * os.get_terminal_size().columns)
-while(True):
-    command = input('Inserisci un istruzione (\'exit\' per terminare; \'help\' per vedere il format delle istruzioni): ')
-    if(command == 'exit'):
-        break
+fields = 'Fluido', 'Incognita', 'Dato1', 'Dato2'
+
+def fetch(entries):
+    if(len(entries[3][1].get()) == 0):
+        command = 'f:' + entries[0][1].get() + ' o:' + entries[1][1].get() + ' ' + entries[2][1].get()[0] + ':' + entries[2][1].get()[1:len(entries[2][1].get())]
+        
+        for entry in entries:
+            field = entry[0]
+            text  = entry[1].get()
+            print('%s: "%s"' % (field, text)) 
+    else:
+        command = 'f:' + entries[0][1].get() + ' o:' + entries[1][1].get() + ' ' + entries[2][1].get()[0] + ':' + entries[2][1].get()[1:len(entries[2][1].get())] + ' ' + entries[3][1].get()[0] + ':' + entries[3][1].get()[1:len(entries[3][1].get())]
+        for entry in entries:
+            field = entry[0]
+            text  = entry[1].get()
+            print('%s: "%s"' % (field, text)) 
+    print('-' * os.get_terminal_size().columns)
     if(commandPattern1.match(command)): #a, r with 1 data
         fluid = getFluid(command)
         typeOfFirstData = getTypeOfFirstData(command)
@@ -175,15 +181,12 @@ while(True):
             elif((operation == 'h' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'h') or 
             (operation == 'v' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'v') or
             (operation == 'h' and typeOfSecondData == 'v') or (operation == 'v' and typeOfSecondData == 'h')):
-                print('-' * os.get_terminal_size().columns)
                 print('Calcolo il titolo con '+ typeOfSecondData +' :')
                 titolo = findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, 'x')
                 print('Calcolo ' + operation + ' con il titolo calcolato precedentemente: ')
                 result = findVHS(titolo, row, fluid, typeOfFirstData, operation)
             else:
-                print('-' * os.get_terminal_size().columns)
                 print('ERROR!')
-                print('-' * os.get_terminal_size().columns)
     elif(commandPattern3.match(command)): # as, rs with 2 data
         fluid = getFluid(command)
         operation = getOperation(command)
@@ -206,7 +209,7 @@ while(True):
                         print(table[typeOfSecondData])
                         print('-' * os.get_terminal_size().columns)
                         raise Exception
-                    print('INTERPOLATIOOOOOOOON!!!!!!!\n')
+                    print('\nINTERPOLATIOOOOOOOON!!!!!!!\n')
                     print('-' * os.get_terminal_size().columns)
                     print('Riga valori minori tabella'+ fluid +' (p = '+ pressure + 'MPa) : ')
                     print(smaller)
@@ -259,3 +262,29 @@ while(True):
         print('-' * os.get_terminal_size().columns)
     else:
         print('ERROR!')
+
+def makeform(root, fields):
+    entries = []
+    for field in fields:
+        row = tk.Frame(root)
+        lab = tk.Label(row, width=15, text=field, anchor='w')
+        ent = tk.Entry(row)
+        row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+        lab.pack(side=tk.LEFT)
+        ent.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+        entries.append((field, ent))
+    return entries
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    ents = makeform(root, fields)
+    root.bind('<Return>', (lambda event, e=ents: fetch(e)))   
+    b1 = tk.Button(root, text='Show',
+                  command=(lambda e=ents: fetch(e)))
+    b1.pack(side=tk.LEFT, padx=5, pady=5)
+    b2 = tk.Button(root, text='Help', command=(lambda : help()))
+    b2.pack(side=tk.LEFT, padx=5, pady=5)
+    b3 = tk.Button(root, text='Quit', command=root.quit)
+    b3.pack(side=tk.LEFT, padx=5, pady=5)
+    
+    root.mainloop()
