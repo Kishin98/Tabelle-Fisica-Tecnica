@@ -5,11 +5,9 @@ Calcolo automatico di alcune grandezze termodinamiche utilizzando tabelle empiri
 
 Per eseguire il programma aprire il file ```TablesData.exe```
 
-Le istruzioni sono coì formattate:
+~~Le istruzioni sono coì formattate:~~Ora è disponibile una GUI molto semplice
 
-Se per trovare il valore incognito è necessario fronire solo 1 dato in ingresso:
-
-```f:<fluido> o:<incognita da trovare> <primo dato>:<valore numerico>```
+![GitHub Logo](/images/CLITabelleFisicaTecnica.png)
 
 Valori accettabili:
 
