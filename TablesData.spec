@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['TablesData.py'],
-             pathex=['E:\\Utenti\\Lorenzo\\Documents\\Python\\Projects\\Tabell Fisica Tecnica'],
+             pathex=['E:\\Utenti\\Lorenzo\\Documents\\GitHub\\Tabelle-Fisica-Tecnica'],
              binaries=[],
              datas=[],
              hiddenimports=[],

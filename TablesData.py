@@ -18,10 +18,8 @@ commandPattern3 = re.compile(r'''(^f:(as|rs)
                                 \sp:(-?(\d+(\.|\,))?\d+)
                                 \s(t|h|s|v):(-?(\d+(\.|\,))?\d+)
                                 )''', re.VERBOSE)
-fluidPattern = re.compile(r'f:(as?|r|rs)')
-operationPattern = re.compile(r'o:(h|hl|hv|s|sl|sv|v|vl|vv|ps|ts|x)')
+
 firstDataPattern = re.compile(r'(p|t):(-?(\d+(\.|\,))?\d+)')
-secondDataPattern = re.compile(r'(p|t|h|s):((\d+(\.|\,))?\d+)')
 
 def getFluid(command):
     start = 0
@@ -79,6 +77,33 @@ def getPressureFormat(pressure):
         return pressure + '0'*n
     return pressure + '.' + '0'*(n - 1)
 
+def findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, operation):
+    l = float(row[getOperands(typeOfSecondData)[0]])
+    vl = float(row[getOperands(typeOfSecondData)[1]])
+    result = (secondData - l)/(vl)
+    print('\nRiga della tabella' + ' ' + fluid + '-' + typeOfFirstData + ':\n')
+    print('-' * os.get_terminal_size().columns)
+    print(row)
+    print('-' * os.get_terminal_size().columns)
+    print(operation + ' = ' + '(' + typeOfSecondData + ' - ' + typeOfSecondData + 'l)/' + typeOfSecondData + 'vl =')
+    print(operation + ' = ' + '(' + str(secondData) + ' - ' + str(l) + ')/' + str(vl) + ' =')
+    print(operation + " = " + str(result) + '\n')
+    print('-' * os.get_terminal_size().columns)
+    return result
+
+def findVHS(secondData, row, fluid, typeOfFirstData, operation):
+    l = float(row[getOperands(operation)[0]])
+    vl = float(row[getOperands(operation)[1]])
+    result = l + secondData*vl
+    print('\nRiga della tabella' + ' ' + fluid + '-' + typeOfFirstData + ':\n')
+    print('-' * os.get_terminal_size().columns)
+    print(row)
+    print('-' * os.get_terminal_size().columns)
+    print(operation + ' = ' + operation + 'l + x * ' + operation + 'vl =')
+    print(operation + ' = ' + str(l) + ' + ' + str(secondData) + ' * ' + str(vl) + ' =')
+    print(operation + " = " + str(result) + '\n')
+    print('-' * os.get_terminal_size().columns)
+    return result
 
 # f:a o:hl t:20      trovare hl dell'acqua con la temperatura
 # f:a o:sv p:2      trovare sv dell'acqua con la pressione
@@ -144,31 +169,21 @@ while(True):
         else:
             operation = getOperation(command)
             if((operation == 'h' or operation == 's' or operation == 'v') and typeOfSecondData == 'x'):
-                l = float(row[getOperands(operation)[0]])
-                vl = float(row[getOperands(operation)[1]])
-                result = l + secondData*vl
-                print('\nRiga della tabella' + ' ' + fluid + '-' + typeOfFirstData + ':\n')
-                print('-' * os.get_terminal_size().columns)
-                print(row)
-                print('-' * os.get_terminal_size().columns)
-                print(operation + ' = ' + operation + 'l + x * ' + operation + 'vl =')
-                print(operation + ' = ' + str(l) + ' + ' + str(secondData) + ' * ' + str(vl) + ' =')
-                print(operation + " = " + str(result) + '\n')
-                print('-' * os.get_terminal_size().columns)
+                result = findVHS(secondData, row, fluid, typeOfFirstData, operation)
             elif(operation == 'x' and (typeOfSecondData == 'h' or typeOfSecondData == 's' or typeOfSecondData == 'v')):
-                l = float(row[getOperands(typeOfSecondData)[0]])
-                vl = float(row[getOperands(typeOfSecondData)[1]])
-                result = (secondData - l)/(vl)
-                print('\nRiga della tabella' + ' ' + fluid + '-' + typeOfFirstData + ':\n')
+                result = findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, operation)
+            elif((operation == 'h' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'h') or 
+            (operation == 'v' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'v') or
+            (operation == 'h' and typeOfSecondData == 'v') or (operation == 'v' and typeOfSecondData == 'h')):
                 print('-' * os.get_terminal_size().columns)
-                print(row)
-                print('-' * os.get_terminal_size().columns)
-                print(operation + ' = ' + '(' + typeOfSecondData + ' - ' + typeOfSecondData + 'l)/' + typeOfSecondData + 'vl =')
-                print(operation + ' = ' + '(' + str(secondData) + ' - ' + str(l) + ')/' + str(vl) + ' =')
-                print(operation + " = " + str(result) + '\n')
-                print('-' * os.get_terminal_size().columns)
+                print('Calcolo il titolo con '+ typeOfSecondData +' :')
+                titolo = findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, 'x')
+                print('Calcolo ' + operation + ' con il titolo calcolato precedentemente: ')
+                result = findVHS(titolo, row, fluid, typeOfFirstData, operation)
             else:
+                print('-' * os.get_terminal_size().columns)
                 print('ERROR!')
+                print('-' * os.get_terminal_size().columns)
     elif(commandPattern3.match(command)): # as, rs with 2 data
         fluid = getFluid(command)
         operation = getOperation(command)
@@ -193,10 +208,10 @@ while(True):
                         raise Exception
                     print('INTERPOLATIOOOOOOOON!!!!!!!\n')
                     print('-' * os.get_terminal_size().columns)
-                    print('Riga valori minori (p = '+ pressure + 'MPa) : ')
+                    print('Riga valori minori tabella'+ fluid +' (p = '+ pressure + 'MPa) : ')
                     print(smaller)
                     print('-' * os.get_terminal_size().columns)
-                    print('Riga valori maggiori (p = '+ pressure + 'MPa) : ')
+                    print('Riga valori maggiori tabella'+ fluid +' (p = '+ pressure + 'MPa) : ')
                     print(greater)
                     print('-' * os.get_terminal_size().columns)
                     smallerOperation = float(smaller[operation])
@@ -212,6 +227,7 @@ while(True):
                 else:
                     result = float(row[operation])
                     print('-' * os.get_terminal_size().columns)
+                    print('Riga tabella '+ fluid +' (p = '+ pressure + 'MPa) : ')
                     print(row)
                     print('-' * os.get_terminal_size().columns)
                     print(operation + ": " + str(result) + '\n')
@@ -243,6 +259,3 @@ while(True):
         print('-' * os.get_terminal_size().columns)
     else:
         print('ERROR!')
-
-
-
