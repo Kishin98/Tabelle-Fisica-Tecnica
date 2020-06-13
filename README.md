@@ -23,6 +23,8 @@ Valori accettabili:
 
 ```x``` -> titolo di vapore; ```ts``` -> temperatura di saturazione; ```ps``` -> pressione di saturazione
 
+Nei campi ```<Dato1>``` e ```<Dato2>``` bisogna inserire la lettera della grandezza seguito dal valore numerico
+
 ```<Dato1>```: ```p``` -> pressione **[MPa]**; ```t``` -> premperatura **[°C]**; **NB: con ```as``` e ```rs``` si potrà fornire solo la pressione come primo dato di ingresso!**
 
 ```<Dato2>```: ```p``` -> pressione **[MPa]**; ```t``` -> premperatura **[°C]**; ```h``` -> entalpia **[kj/kg]**; ```s``` -> entropia **[kj/kg\*k]**  
@@ -37,10 +39,7 @@ I risultati saranno stampati sul termilale abbinato
 
 # Esempi:
 
-```f:a o:hl t:20```    -> ottengo entalpia di liquido saturo dell'acqua a 20°C
-
-```f:r o:h p:2 x:0.87```   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2MPa
-
-```f:as o:h p:3 t:225```   -> ottengo entalpia dell'acqua surriscaldata a 3MPa e 225°C
-
-```f:a o:x p:3 s:3.254```  -> ottengo titolo di vapore dell'acqua satura a 3MPa fornendo l'entropia
+```<Fluido>:a <Incognita>:hl <Dato1>:t20```    -> ottengo entalpia di liquido saturo dell'acqua a 20°C
+```<Fluido>:r <Incognita>:h <Dato1>:p2 <Dato2>:x0.87```   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2MPa
+```<Fluido>:as <Incognita>:h <Dato1>:p3 <Dato2>:t225```   -> ottengo entalpia dell'acqua surriscaldata a 3MPa e 225°C
+```<Fluido>:a <Incognita>:h <Dato1>:p3 <Dato2>:s2.9635```   -> ottengo entalpia dell'acqua surriscaldata a 3MPa fornendo l'entropia
