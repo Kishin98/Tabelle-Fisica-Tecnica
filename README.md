@@ -7,7 +7,7 @@ Per eseguire il programma aprire il file ```TablesData.exe```
 
 ~~Le istruzioni sono coì formattate:~~Ora è disponibile una GUI molto semplice
 
-![GitHub Logo](/images/CLITabelleFisicaTecnica.png)
+![GUI](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/images/GUITabelleFisicaTecnica.PNG)
 
 Valori accettabili:
 
