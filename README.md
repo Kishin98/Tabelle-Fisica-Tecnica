@@ -7,7 +7,7 @@ Tutti i procedimenti effettuati per calcolare i risultati vengono mostrati
 
 Per eseguire il programma aprire il file ```TablesData.exe```
 
-~~Le istruzioni sono coì formattate:~~Ora è disponibile una GUI molto semplice
+~~Le istruzioni sono così formattate:~~ Ora è disponibile una GUI molto semplice
 
 ![GUI](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/GUITabelleFisicaTecnica.PNG)
 
