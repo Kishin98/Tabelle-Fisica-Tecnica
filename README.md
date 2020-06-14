@@ -13,9 +13,9 @@ Per eseguire il programma aprire il file ```TablesData.exe```
 
 Valori accettabili:
 
-```<fluido>``` : ```a``` -> acqua satura; ```as``` -> acqua surriscaldata; ```r ```-> R134a saturo; ```rs``` -> R14a surriscaldato
+```<Fluido>``` : ```a``` -> acqua satura; ```as``` -> acqua surriscaldata; ```r ```-> R134a saturo; ```rs``` -> R14a surriscaldato
 
-```<incognita da trovare>``` :
+```<Incognita>``` :
 
 ```h``` -> entalpia; ```hl``` -> entalpia liquido saturo; ```hv``` -> entalpia vapore saturo
 
