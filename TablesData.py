@@ -19,6 +19,21 @@ commandPattern3 = re.compile(r'''(^f:(as|rs)
 
 firstDataPattern = re.compile(r'(p|t):(-?(\d+(\.|\,))?\d+)')
 
+def unit(par):
+    if par == 'h' or par == 'hl'or par == 'hv' :
+        return '[kj/kg]'
+    if par == 's'or par == 'sl'or par == 'sv' :
+        return '[kj/kg*k]'
+    if par == 'p' or par == 'ps' :
+        return '[MPa]'
+    if par == 't' or par == 'ts' :
+        return '[°C]'
+    if par == 'v'or par == 'vl'or par == 'vv' :
+        return '[m^3/kg]'
+    if par == 'x' :
+        return ''
+    return ''
+
 def getFluid(command):
     start = 0
     finish = 0
@@ -85,7 +100,7 @@ def findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, operat
     print('-' * os.get_terminal_size().columns)
     print(operation + ' = ' + '(' + typeOfSecondData + ' - ' + typeOfSecondData + 'l)/' + typeOfSecondData + 'vl =')
     print(operation + ' = ' + '(' + str(secondData) + ' - ' + str(l) + ')/' + str(vl) + ' =')
-    print(operation + " = " + str(result) + '\n')
+    print(operation + " = " + str(result) + unit(operation) + '\n')
     print('-' * os.get_terminal_size().columns)
     return result
 
@@ -99,7 +114,7 @@ def findVHS(secondData, row, fluid, typeOfFirstData, operation):
     print('-' * os.get_terminal_size().columns)
     print(operation + ' = ' + operation + 'l + x * ' + operation + 'vl =')
     print(operation + ' = ' + str(l) + ' + ' + str(secondData) + ' * ' + str(vl) + ' =')
-    print(operation + " = " + str(result) + '\n')
+    print(operation + " = " + str(result) + unit(operation) + '\n')
     print('-' * os.get_terminal_size().columns)
     return result
 
@@ -158,8 +173,10 @@ def fetch(entries):
             print('-' * os.get_terminal_size().columns)
             print(row)
             print('-' * os.get_terminal_size().columns)
-            print(operation + ": " + str(result) + '\n')
+            print(operation + ": " + str(result) + unit(operation) + '\n')
             print('-' * os.get_terminal_size().columns)
+
+
     elif(commandPattern2.match(command)): # a, r with 2 data
         fluid = getFluid(command)
         typeOfFirstData = getTypeOfFirstData(command)
@@ -187,6 +204,8 @@ def fetch(entries):
                 result = findVHS(titolo, row, fluid, typeOfFirstData, operation)
             else:
                 print('ERROR!')
+
+
     elif(commandPattern3.match(command)): # as, rs with 2 data
         fluid = getFluid(command)
         operation = getOperation(command)
@@ -225,7 +244,7 @@ def fetch(entries):
                     print('-' * os.get_terminal_size().columns)
                     print(operation + ' = ' + operation + 'min '+ '+ ((' + typeOfSecondData + ' - ' + typeOfSecondData + 'min' + ')/(' + typeOfSecondData + 'max ' + ' - ' + typeOfSecondData + 'min' + ')) * (' + operation + 'max ' + ' - ' + operation + 'min' + ')' 
                     + ' = \n' + operation + ' = '  + str(smallerOperation)+ ' + ((' + str(secondData) + ' - ' + str(smallerSecondData) + ')/(' + str(greaterSecondData) + ' - ' + str(smallerSecondData) + ')) * (' + str(greaterOperation) + ' - ' + str(smallerOperation) + ')'
-                    + '=\n' + operation + ' = ' +str(result) + '\n')
+                    + '=\n' + operation + ' = ' +str(result) + unit(operation) + '\n')
                     print('-' * os.get_terminal_size().columns)
                 else:
                     result = float(row[operation])
@@ -233,7 +252,7 @@ def fetch(entries):
                     print('Riga tabella '+ fluid +' (p = '+ pressure + 'MPa) : ')
                     print(row)
                     print('-' * os.get_terminal_size().columns)
-                    print(operation + ": " + str(result) + '\n')
+                    print(operation + ": " + str(result) + unit(operation) + '\n')
                     print('-' * os.get_terminal_size().columns)
             except:
                 print('ERROR(La p potrebbe non esserci nelle tabelle oppure un parametro inserito è fuori range)!\n')
