@@ -12,7 +12,7 @@ commandPattern2 = re.compile(r'''(^f:(a|r) #bifase fornendo titolo o titolo forn
                                 \s(h|s|x|v):(-?(\d+(\.|\,))?\d+)
                                 )''', re.VERBOSE)
 commandPattern3 = re.compile(r'''(^f:(as|rs)
-                                \so:(h|s|v)
+                                \so:(h|s|v|t)
                                 \sp:(-?(\d+(\.|\,))?\d+)
                                 \s(t|h|s|v):(-?(\d+(\.|\,))?\d+)
                                 )''', re.VERBOSE)
@@ -109,6 +109,9 @@ def findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, operat
     print(operation + ' = ' + '(' + str(secondData) + ' - ' + str(l) + ')/' + str(vl) + ' =')
     print(operation + " = " + str(result) + unit(operation) + '\n')
     print('-' * os.get_terminal_size().columns)
+    if(result < 0): #could happen from bad input
+        print('WARNING: titolo < 0')
+        print('-' * os.get_terminal_size().columns)
     return result
 
 def findVHS(secondData, row, fluid, typeOfFirstData, operation):
@@ -123,7 +126,40 @@ def findVHS(secondData, row, fluid, typeOfFirstData, operation):
     print(operation + ' = ' + str(l) + ' + ' + str(secondData) + ' * ' + str(vl) + ' =')
     print(operation + " = " + str(result) + unit(operation) + '\n')
     print('-' * os.get_terminal_size().columns)
+    if(operation == 'v' and result < 0): #could happen from bad input
+        print('WARNING: volume specifico < 0')
+        print('-' * os.get_terminal_size().columns)
     return result
+
+def interpolation(table, fluid, pressure, operation, typeOfSecondData, secondData):
+    smaller = table.loc[table[typeOfSecondData] == table[typeOfSecondData][table[typeOfSecondData] < secondData].max()]
+    greater = table.loc[table[typeOfSecondData] == table[typeOfSecondData][table[typeOfSecondData] > secondData].min()]
+    if(smaller.empty or greater.empty):
+        print(typeOfSecondData + ' è fuori range!')
+        print('-' * os.get_terminal_size().columns)
+        print('Ecco il range di ' + typeOfSecondData + ' disponibile nella tabella '+ fluid + 'a p =' + pressure +'[MPa]:')
+        print(table[typeOfSecondData])
+        print('-' * os.get_terminal_size().columns)
+        return None
+    else:
+        print('-' * os.get_terminal_size().columns)
+        print('Riga valori minori tabella '+ fluid +' (p = '+ pressure + '[MPa]) : ')
+        print(smaller)
+        print('-' * os.get_terminal_size().columns)
+        print('Riga valori maggiori tabella '+ fluid +' (p = '+ pressure + '[MPa]) : ')
+        print(greater)
+        print('-' * os.get_terminal_size().columns)
+        smallerOperation = float(smaller[operation])
+        greaterOperation = float(greater[operation])
+        smallerSecondData = float(smaller[typeOfSecondData])
+        greaterSecondData = float(greater[typeOfSecondData])
+        result = smallerOperation + ((secondData - smallerSecondData)/(greaterSecondData - smallerSecondData)) * (greaterOperation - smallerOperation)
+        print('-' * os.get_terminal_size().columns)
+        print(operation + ' = ' + operation + 'min '+ '+ ((' + typeOfSecondData + ' - ' + typeOfSecondData + 'min' + ')/(' + typeOfSecondData + 'max ' + ' - ' + typeOfSecondData + 'min' + ')) * (' + operation + 'max ' + ' - ' + operation + 'min' + ')' 
+        + ' = \n' + operation + ' = '  + str(smallerOperation)+ ' + ((' + str(secondData) + ' - ' + str(smallerSecondData) + ')/(' + str(greaterSecondData) + ' - ' + str(smallerSecondData) + ')) * (' + str(greaterOperation) + ' - ' + str(smallerOperation) + ')'
+        + '=\n' + operation + ' = ' +str(result) + unit(operation) + '\n')
+        print('-' * os.get_terminal_size().columns)
+        return result
 
 def help():
     print('-' * os.get_terminal_size().columns)
@@ -140,35 +176,47 @@ def help():
     'v -> volume specifico [m^3/kg]; x -> titolo; NB: con as e rs è NON è possibile fornire la pressione e il titolo come secondo dato!')
     print('-' * os.get_terminal_size().columns)
     print('Esempi:')
-    print('<Fluido>:a <Incognita>:hl <Dato1>:t20    -> ottengo entalpia di liquido saturo dell\'acqua a 20°C')
-    print('<Fluido>:r <Incognita>:h <Dato1>:p2 <Dato2>:x0.87   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2MPa')
-    print('<Fluido>:as <Incognita>:h <Dato1>:p3 <Dato2>:t225   -> ottengo entalpia dell\'acqua surriscaldata a 3MPa e 225°C')
-    print('<Fluido>:a <Incognita>:h <Dato1>:p3 <Dato2>:s2.9635   -> ottengo entalpia dell\'acqua surriscaldata a 3MPa fornendo l\'entropia')
+    print('<Fluido>:a <Incognita>:hl <Dato1>:t20    -> ottengo entalpia di liquido saturo dell\'acqua a 20[°C]')
+    print('<Fluido>:r <Incognita>:h <Dato1>:p2 <Dato2>:x0.87   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2[MPa]')
+    print('<Fluido>:as <Incognita>:h <Dato1>:p3 <Dato2>:t225   -> ottengo entalpia dell\'acqua surriscaldata a 3[MPa] e 225[°C]')
+    print('<Fluido>:a <Incognita>:h <Dato1>:p3 <Dato2>:s2.9635   -> ottengo entalpia dell\'acqua surriscaldata a 3[MPa] fornendo l\'entropia')
     print('-' * os.get_terminal_size().columns)
+
+def convCommaToDot(string):
+    if(',' in string):
+        return string.replace(',', '.')
+    return string
 
 fields = 'Fluido', 'Incognita', 'Dato1', 'Dato2'
 
 def fetch(entries):
     if(len(entries[3][1].get()) == 0):
-        command = 'f:' + entries[0][1].get() + ' o:' + entries[1][1].get() + ' ' + entries[2][1].get()[0] + ':' + entries[2][1].get()[1:len(entries[2][1].get())]
-        
+        command = 'f:' + entries[0][1].get() + ' o:' + entries[1][1].get() + ' ' + entries[2][1].get()[0] + ':' + convCommaToDot(entries[2][1].get()[1:len(entries[2][1].get())])
+        print(command)
         for entry in entries:
             field = entry[0]
             text  = entry[1].get()
             print('%s: "%s"' % (field, text)) 
     else:
-        command = 'f:' + entries[0][1].get() + ' o:' + entries[1][1].get() + ' ' + entries[2][1].get()[0] + ':' + entries[2][1].get()[1:len(entries[2][1].get())] + ' ' + entries[3][1].get()[0] + ':' + entries[3][1].get()[1:len(entries[3][1].get())]
+        command = 'f:' + entries[0][1].get() + ' o:' + entries[1][1].get() + ' ' + entries[2][1].get()[0] + ':' + convCommaToDot(entries[2][1].get()[1:len(entries[2][1].get())]) + ' ' + entries[3][1].get()[0] + ':' + convCommaToDot(entries[3][1].get()[1:len(entries[3][1].get())])
+        print(command)
         for entry in entries:
             field = entry[0]
             text  = entry[1].get()
             print('%s: "%s"' % (field, text)) 
     print('-' * os.get_terminal_size().columns)
+
+
     if(commandPattern1.match(command)): #a, r with 1 data
-        fluid = getFluid(command)
-        typeOfFirstData = getTypeOfFirstData(command)
+
+        fluid = getFluid(command)# a|r
+
+        operation = getOperation(command) #hl|hv|sl|sv|vl|vv|ps|ts
+
+        typeOfFirstData = getTypeOfFirstData(command) # p|t 
+        firstData = float(getFirstData(command)) #value of p|t
+
         table = pd.read_excel(fluid + typeOfFirstData + '.xlsx')
-        operation = getOperation(command)
-        firstData = float(getFirstData(command))
         row = table.loc[table[typeOfFirstData] == firstData]
         if(row.empty):
             print('-' * os.get_terminal_size().columns)
@@ -185,11 +233,16 @@ def fetch(entries):
 
 
     elif(commandPattern2.match(command)): # a, r with 2 data
-        fluid = getFluid(command)
-        typeOfFirstData = getTypeOfFirstData(command)
-        typeOfSecondData = getTypeOfSecondData(command)
-        firstData = float(getFirstData(command))
-        secondData = float(getSecondData(command))
+        fluid = getFluid(command) #a|r
+
+        operation = getOperation(command) # h|s|v|x to e found
+
+        typeOfFirstData = getTypeOfFirstData(command) # p|t
+        firstData = float(getFirstData(command)) #value of p|t
+
+        typeOfSecondData = getTypeOfSecondData(command) # h|s|v|x
+        secondData = float(getSecondData(command)) #value of h|s|v|x
+
         table = pd.read_excel(fluid + typeOfFirstData + '.xlsx')
         row = table.loc[table[typeOfFirstData] == firstData]
         if(row.empty):
@@ -197,92 +250,102 @@ def fetch(entries):
             print('La ' + typeOfFirstData + ' inserita non c\'è nelle tabelle!')
             print('-' * os.get_terminal_size().columns)
         else:
-            operation = getOperation(command)
             if((operation == 'h' or operation == 's' or operation == 'v') and typeOfSecondData == 'x'):
+
                 result = findVHS(secondData, row, fluid, typeOfFirstData, operation)
+
             elif(operation == 'x' and (typeOfSecondData == 'h' or typeOfSecondData == 's' or typeOfSecondData == 'v')):
+
                 result = findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, operation)
+
             elif((operation == 'h' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'h') or 
             (operation == 'v' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'v') or
             (operation == 'h' and typeOfSecondData == 'v') or (operation == 'v' and typeOfSecondData == 'h')):
+
                 print('Calcolo il titolo con '+ typeOfSecondData +' :')
                 titolo = findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, 'x')
                 print('Calcolo ' + operation + ' con il titolo calcolato precedentemente: ')
                 result = findVHS(titolo, row, fluid, typeOfFirstData, operation)
+
             else:
                 print('ERROR!')
 
 
     elif(commandPattern3.match(command)): # as, rs with 2 data
-        fluid = getFluid(command)
-        operation = getOperation(command)
-        pressure = getFirstData(command)
-        secondData = float(getSecondData(command))
-        typeOfSecondData = getTypeOfSecondData(command)
+        fluid = getFluid(command) #as|rs
+
+        operation = getOperation(command) # h|s|v|t to be found
+
+        pressure = getFirstData(command) #p
+
+        typeOfSecondData = getTypeOfSecondData(command) # h|s|v|t
+        secondData = float(getSecondData(command)) # value of h|s|v|t
+
         if(len(pressure) > 5 or (len(pressure) >= 4 and not '.' in pressure)):
-            print('La p inserita non c\'è nelle tabelle!\n')
+            print('ERROR! La pressione inserita è troppo piccola o troppo grande! Il range delle pressioni per ' + fluid + ' è:')
+            print('Ecco il range delle pressioni disponibili: ')
+            if(fluid == 'as'):
+                for i in satWaterPressures:
+                    print(i + '[MPa]')
+            if(fluid == 'rs'):
+                for i in satRefPressures:
+                    print(i + '[MPa]')
         else:
             if (fluid == 'as' and getPressureFormat(pressure) in satWaterPressures) or (fluid == 'rs' and getPressureFormat(pressure) in satRefPressures):
                 table = pd.read_excel(fluid + getPressureFormat(pressure) + '.xlsx')
                 row = table.loc[table[typeOfSecondData] == secondData]
                 if(row.empty):
-                    smaller = table.loc[table[typeOfSecondData] == table[typeOfSecondData][table[typeOfSecondData] < secondData].max()]
-                    greater = table.loc[table[typeOfSecondData] == table[typeOfSecondData][table[typeOfSecondData] > secondData].min()]
-                    if(smaller.empty or greater.empty):
-                        print(typeOfSecondData + ' è fuori range!')
-                        print('-' * os.get_terminal_size().columns)
-                        print('Ecco il range di ' + typeOfSecondData + ' disponibile nella tabella '+ fluid + 'a p =' + pressure +'MPa:')
-                        print(table[typeOfSecondData])
-                        print('-' * os.get_terminal_size().columns)
-                    else:
-                        print('\nINTERPOLATIOOOOOOOON!!!!!!!\n')
-                        print('-' * os.get_terminal_size().columns)
-                        print('Riga valori minori tabella '+ fluid +' (p = '+ pressure + 'MPa) : ')
-                        print(smaller)
-                        print('-' * os.get_terminal_size().columns)
-                        print('Riga valori maggiori tabella '+ fluid +' (p = '+ pressure + 'MPa) : ')
-                        print(greater)
-                        print('-' * os.get_terminal_size().columns)
-                        smallerOperation = float(smaller[operation])
-                        greaterOperation = float(greater[operation])
-                        smallerSecondData = float(smaller[typeOfSecondData])
-                        greaterSecondData = float(greater[typeOfSecondData])
-                        result = smallerOperation + ((secondData - smallerSecondData)/(greaterSecondData - smallerSecondData)) * (greaterOperation - smallerOperation)
-                        print('-' * os.get_terminal_size().columns)
-                        print(operation + ' = ' + operation + 'min '+ '+ ((' + typeOfSecondData + ' - ' + typeOfSecondData + 'min' + ')/(' + typeOfSecondData + 'max ' + ' - ' + typeOfSecondData + 'min' + ')) * (' + operation + 'max ' + ' - ' + operation + 'min' + ')' 
-                        + ' = \n' + operation + ' = '  + str(smallerOperation)+ ' + ((' + str(secondData) + ' - ' + str(smallerSecondData) + ')/(' + str(greaterSecondData) + ' - ' + str(smallerSecondData) + ')) * (' + str(greaterOperation) + ' - ' + str(smallerOperation) + ')'
-                        + '=\n' + operation + ' = ' +str(result) + unit(operation) + '\n')
-                        print('-' * os.get_terminal_size().columns)
+
+                    result = interpolation(table, fluid, pressure, operation, typeOfSecondData, secondData)
+
                 else:
                     result = float(row[operation])
                     print('-' * os.get_terminal_size().columns)
-                    print('Riga tabella '+ fluid +' (p = '+ pressure + 'MPa) : ')
+                    print('Riga tabella '+ fluid +' (p = '+ pressure + '[MPa]) : ')
                     print(row)
                     print('-' * os.get_terminal_size().columns)
                     print(operation + ": " + str(result) + unit(operation) + '\n')
                     print('-' * os.get_terminal_size().columns)
+            elif (fluid == 'as' and (float(pressure) < float(satWaterPressures[0]) or float(pressure) > float(satWaterPressures[32]))) or (fluid == 'rs' and (float(pressure) < float(satRefPressures[0]) or float(pressure) > float(satRefPressures[17]))):
+                print('ERROR! La pressione inserita è troppo piccola o troppo grande! Il range delle pressioni per ' + fluid + ' è:')
+                if(fluid == 'as'):
+                    print(satWaterPressures[0] + '[MPa] - ' + satWaterPressures[32] + '[MPa]')
+                if(fluid == 'rs'):
+                    print(satRefPressures[0] + '[MPa] - ' + satRefPressures[17] + '[MPa]')
             else:
-                smallerPressure = max(filter(lambda i: float(i) < float(pressure), satWaterPressures)) 
-                greaterPressure = min(filter(lambda i: float(i) > float(pressure), satWaterPressures)) 
+                if(fluid == 'as'):
+                    smallerPressure = max(filter(lambda i: float(i) < float(pressure), satWaterPressures)) 
+                    greaterPressure = min(filter(lambda i: float(i) > float(pressure), satWaterPressures))
+                if(fluid == 'rs'):
+                    smallerPressure = max(filter(lambda i: float(i) < float(pressure), satRefPressures)) 
+                    greaterPressure = min(filter(lambda i: float(i) > float(pressure), satRefPressures))
                 smallerTable = pd.read_excel(fluid + smallerPressure + '.xlsx')
                 greaterTable = pd.read_excel(fluid + greaterPressure + '.xlsx')
                 smaller = smallerTable.loc[smallerTable[typeOfSecondData] == secondData]
                 greater = greaterTable.loc[greaterTable[typeOfSecondData] == secondData]
                 if(smaller.empty or greater.empty):
-                        print(typeOfSecondData + ' è fuori range!')
+                    print('Interpolazione tabella '+ fluid +' a p = '+ smallerPressure + '[MPa] per '+ typeOfSecondData +' = ' + str(secondData) + unit(typeOfSecondData))
+                    op1 = interpolation(smallerTable, fluid, smallerPressure, operation, typeOfSecondData, secondData)
+                    print('Interpolazione tabella '+ fluid +' a p = '+ greaterPressure + '[MPa] per '+ typeOfSecondData +' = ' + str(secondData) + unit(typeOfSecondData))
+                    op2 = interpolation(greaterTable, fluid, greaterPressure, operation, typeOfSecondData, secondData)
+                    smallerOperation = min(op1, op2)
+                    greaterOperation = max(op1, op2)
+                    if not(smallerOperation is None or greaterOperation is None):
+                        smallerSecondData = float(smallerPressure)
+                        greaterSecondData = float(greaterPressure)
+                        result = smallerOperation + ((float(pressure) - smallerSecondData)/(greaterSecondData - smallerSecondData)) * (greaterOperation - smallerOperation)
+                        print('Interpolazione con '+ operation +'min = '+ str(smallerOperation) + unit(operation) +' e ' + operation + 'max = '+ str(greaterOperation) + unit(operation))
                         print('-' * os.get_terminal_size().columns)
-                        print('Ecco il range di '+ secondData +' disponibile per p = '+ smallerPressure +':')
-                        print(smallerTable[typeOfSecondData])
-                        print('Ecco il range di '+ secondData +' disponibile per p = '+ greaterPressure +':')
-                        print(greaterrTable[typeOfSecondData])
+                        print(operation + ' = ' + operation + 'min '+ '+ ((p - pmin' + ')/(pmax ' + ' - pmin' + ')) * (' + operation + 'max ' + ' - ' + operation + 'min' + ')' 
+                        + ' = \n' + operation + ' = '  + str(smallerOperation)+ ' + ((' + pressure + ' - ' + str(smallerSecondData) + ')/(' + str(greaterSecondData) + ' - ' + str(smallerSecondData) + ')) * (' + str(greaterOperation) + ' - ' + str(smallerOperation) + ')'
+                        + '=\n' + operation + ' = ' +str(result) + unit(operation) + '\n')
                         print('-' * os.get_terminal_size().columns)
                 else:
-                    print('\nINTERPOLATIOOOOOOOON!!!!!!!\n')
                     print('-' * os.get_terminal_size().columns)
-                    print('Riga valori minori tabella '+ fluid +' (p = '+ smallerPressure + 'MPa) : ')
+                    print('Riga valori minori tabella '+ fluid +' (p = '+ smallerPressure + '[MPa]) : ')
                     print(smaller)
                     print('-' * os.get_terminal_size().columns)
-                    print('Riga valori maggiori tabella '+ fluid +' (p = '+ greaterPressure + 'MPa) : ')
+                    print('Riga valori maggiori tabella '+ fluid +' (p = '+ greaterPressure + '[MPa]) : ')
                     print(greater)
                     print('-' * os.get_terminal_size().columns)
                     smallerOperation = float(smaller[operation])
@@ -295,29 +358,6 @@ def fetch(entries):
                     + ' = \n' + operation + ' = '  + str(smallerOperation)+ ' + ((' + pressure + ' - ' + str(smallerSecondData) + ')/(' + str(greaterSecondData) + ' - ' + str(smallerSecondData) + ')) * (' + str(greaterOperation) + ' - ' + str(smallerOperation) + ')'
                     + '=\n' + operation + ' = ' +str(result) + unit(operation) + '\n')
                     print('-' * os.get_terminal_size().columns)
-            
-    elif(command == 'help'):
-        print('-' * os.get_terminal_size().columns)
-        print('Istruzioni:')
-        print('Se è necessario solo un dato in ingresso:')
-        print('f:<fluido> o:<incognita da trovare> <primo dato>:<valore numerico>')
-        print('Se sono necessari 2 dati in ingresso:')
-        print('f:<fluido> o:<incognita da trovare> <primo dato>:<valore numerico> <secondo dato>:<valore numerico>')
-        print('Valori accettabili:')
-        print('<fluido> : a -> acqua satura; as -> acqua surriscaldata; r -> R134a saturo; rs -> R14a surriscaldato')
-        print('<incognita da trovare> : h -> entalpia(bifase o surriscaldato); hl -> entalpia licquido saturo; hv -> entalpia vapore saturo\n'+
-        's -> entropia(bifase o surriscaldato); sl -> entropia liquido saturo; sv -> entropia vapore saturo\n' + 
-        'v -> volume specifico(bifase o surriscaldato); vl -> volume specifico liquido saturo; vv -> volume specifico vapore saturo\n' + 
-        'x -> titolo di vapore; ts -> temperatura di saturazione; ps -> pressione di saturazione')
-        print('<primo dato>: p -> pressione [MPa]; t -> premperatura [°C]; NB: con as e rs si potrà fornire solo la pressione come primo dato di ingresso!')
-        print('<secondo dato>: p -> pressione [MPa]; t -> premperatura [°C]; h -> entalpia [kj/kg]; s -> entropia [kj/kg*k]\n' + 
-        'v -> volume specifico [m^3/kg]; x -> titolo; NB: con as e rs è NON è possibile fornire la pressione e il titolo come secondo dato!')
-        print('-' * os.get_terminal_size().columns)
-        print('Esempi:')
-        print('f:a o:hl t:20    -> ottengo entalpia di liquido saturo dell\'acqua a 20°C')
-        print('f:r o:h p:2 x:0.87   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2MPa')
-        print('f:as o:h p:3 t:225   -> ottengo entalpia dell\'acqua surriscaldata a 3MPa e 225°C')
-        print('-' * os.get_terminal_size().columns)
     else:
         print('ERROR!')
 
