@@ -1,5 +1,7 @@
 # Tabelle-Fisica-Tecnica
-Calcolo automatico di alcune grandezze termodinamiche utilizzando tabelle empiriche
+Calcolo automatico di valori esatti di alcune grandezze termodinamiche utilizzando tabelle empiriche
+
+Tutti i procedimenti effettuati per calcolare i risultati vengono mostrati
 
 **Interpolazione lineare automatica**
 
@@ -7,7 +9,7 @@ Per eseguire il programma aprire il file ```TablesData.exe```
 
 ~~Le istruzioni sono coì formattate:~~Ora è disponibile una GUI molto semplice
 
-![GUI](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/images/GUITabelleFisicaTecnica.PNG)
+![GUI](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/GUITabelleFisicaTecnica.PNG)
 
 Valori accettabili:
 
@@ -15,15 +17,16 @@ Valori accettabili:
 
 ```<incognita da trovare>``` :
 
-```h``` -> entalpia(bifase o surriscaldato); ```hl``` -> entalpia licquido saturo; ```hv``` -> entalpia vapore saturo
+```h``` -> entalpia; ```hl``` -> entalpia liquido saturo; ```hv``` -> entalpia vapore saturo
 
-```s``` -> entropia(bifase o surriscaldato); ```sl``` -> entropia liquido saturo; ```sv``` -> entropia vapore saturo
+```s``` -> entropia; ```sl``` -> entropia liquido saturo; ```sv``` -> entropia vapore saturo
 
-```v``` -> volume specifico(bifase o surriscaldato); ```vl``` -> volume specifico liquido saturo; ```vv``` -> volume specifico vapore saturo
+```v``` -> volume specifico; ```vl``` -> volume specifico liquido saturo; ```vv``` -> volume specifico vapore saturo
 
 ```x``` -> titolo di vapore; ```ts``` -> temperatura di saturazione; ```ps``` -> pressione di saturazione
 
-Nei campi ```<Dato1>``` e ```<Dato2>``` bisogna inserire la lettera della grandezza seguito dal valore numerico
+Nei campi ```<Dato1>``` e ```<Dato2>``` bisogna inserire la lettera della grandezza seguito dal valore numerico (i numeri decimali possono essere indicati sia con la ```,``` che con il ```.```)
+Esempio: ```p2``` -> pressione = 2MPa
 
 ```<Dato1>```: ```p``` -> pressione **[MPa]**; ```t``` -> premperatura **[°C]**; **NB: con ```as``` e ```rs``` si potrà fornire solo la pressione come primo dato di ingresso!**
 
@@ -35,11 +38,44 @@ Nei campi ```<Dato1>``` e ```<Dato2>``` bisogna inserire la lettera della grande
 
 I risultati saranno stampati sul termilale abbinato
 
-![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/images/CLITabelleFisicaTecnica.PNG)
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/CLITabelleFisicaTecnica.PNG)
 
 # Esempi:
 
-```<Fluido>:a <Incognita>:hl <Dato1>:t20```    -> ottengo entalpia di liquido saturo dell'acqua a 20°C
-```<Fluido>:r <Incognita>:h <Dato1>:p2 <Dato2>:x0.87```   -> ottengo entalpia di R134a con titolo di vapore = 0.87 a 2MPa
-```<Fluido>:as <Incognita>:h <Dato1>:p3 <Dato2>:t225```   -> ottengo entalpia dell'acqua surriscaldata a 3MPa e 225°C
-```<Fluido>:a <Incognita>:h <Dato1>:p3 <Dato2>:s2.9635```   -> ottengo entalpia dell'acqua surriscaldata a 3MPa fornendo l'entropia
+1. Ottengo l'entalpia di liquido saturo dell'acqua fornendo la pressione:
+
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempiohl.png)
+
+
+2. Ottengo l'entalpia del R134a fornendo la pressione e il titolo:
+
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioTitolo.png)
+
+
+3. Ottengo l'entalpia dell'acqua fornendo l'entropia, il titolo viene calcolato autimaticamente:
+
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioTitoloAuto.png)
+
+
+4. Sapendo di essere nelle condizioni si acqua surriscaldata, ottengo l'entalpia fornendo la pressione e la temperatura:
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioAcquaSurr.png)
+
+
+5. Interpolazione automatica fornendo una temperatura intermedia non direttamente riportata in tabella:
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioInterpolazioneTemp.png)
+
+
+6. Interpolazione automatica fornendo una pressione intermedia non direttamente riportata in tabella:
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioInterpolazionePres.png)
+
+
+7. Interpolazione "doppia" fornendo pressioe e temperatura intermedie non presenti nelle tabelle:
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/EsempioDoppiaInterpolazione.png)
+
+
+8. Inserimento di valori negativi:
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioNegativo.png)
+
+
+9. Nel caso di risultati improbabili viene lanciato un warning:
+![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioWarningNegativo.png)
