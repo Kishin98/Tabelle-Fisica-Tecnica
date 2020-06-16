@@ -69,7 +69,7 @@ I risultati saranno stampati sul termilale abbinato
 ![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/esempioInterpolazionePres.png)
 
 
-7. Interpolazione "doppia" fornendo pressioe e temperatura intermedie non presenti nelle tabelle:
+7. Interpolazione "doppia" fornendo pressione e temperatura intermedie non presenti nelle tabelle:
 ![TERMINALE](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/EsempioDoppiaInterpolazione.png)
 
 
