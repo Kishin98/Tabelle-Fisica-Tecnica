@@ -313,12 +313,24 @@ def fetch(entries):
                 if(fluid == 'rs'):
                     print(satRefPressures[0] + '[MPa] - ' + satRefPressures[17] + '[MPa]')
             else:
-                if(fluid == 'as'):
-                    smallerPressure = max(filter(lambda i: float(i) < float(pressure), satWaterPressures)) 
-                    greaterPressure = min(filter(lambda i: float(i) > float(pressure), satWaterPressures))
+                if(fluid == 'as'): # if i'm here pressure is within the range
+                    for i in reversed(satWaterPressures):
+                        if float(i) < float(pressure):
+                            smallerPressure = i
+                            break
+                    for i in satWaterPressures:
+                        if float(i) > float(pressure):
+                            greaterPressure = i
+                            break
                 if(fluid == 'rs'):
-                    smallerPressure = max(filter(lambda i: float(i) < float(pressure), satRefPressures)) 
-                    greaterPressure = min(filter(lambda i: float(i) > float(pressure), satRefPressures))
+                    for i in reversed(satRefPressures):
+                        if float(i) < float(pressure):
+                            smallerPressure = i
+                            break
+                    for i in satRefPressures:
+                        if float(i) > float(pressure):
+                            greaterPressure = i
+                            break
                 smallerTable = pd.read_excel(fluid + smallerPressure + '.xlsx')
                 greaterTable = pd.read_excel(fluid + greaterPressure + '.xlsx')
                 smaller = smallerTable.loc[smallerTable[typeOfSecondData] == secondData]
