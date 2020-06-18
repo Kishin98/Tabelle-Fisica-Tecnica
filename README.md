@@ -7,7 +7,7 @@ Tutti i procedimenti effettuati per calcolare i risultati vengono mostrati
 
 Per eseguire il programma aprire il file ```TablesData.exe```
 
-~~Le istruzioni sono così formattate:~~ Ora è disponibile una GUI molto semplice
+Ora è disponibile una GUI molto semplice
 
 ![GUI](https://github.com/Kishin98/Tabelle-Fisica-Tecnica/blob/master/image/GUITabelleFisicaTecnica.PNG)
 
@@ -21,6 +21,8 @@ Valori accettabili:
 
 ```s``` -> entropia; ```sl``` -> entropia liquido saturo; ```sv``` -> entropia vapore saturo
 
+```u``` -> energia interna; ```ul``` -> energia interna liquido saturo; ```uv``` -> energia interna vapore saturo
+
 ```v``` -> volume specifico; ```vl``` -> volume specifico liquido saturo; ```vv``` -> volume specifico vapore saturo
 
 ```x``` -> titolo di vapore; ```ts``` -> temperatura di saturazione; ```ps``` -> pressione di saturazione
@@ -28,11 +30,14 @@ Valori accettabili:
 Nei campi ```<Dato1>``` e ```<Dato2>``` bisogna inserire la lettera della grandezza seguito dal valore numerico (i numeri decimali possono essere indicati sia con la ```,``` che con il ```.```)
 Esempio: ```p2``` -> pressione = 2MPa
 
-```<Dato1>```: ```p``` -> pressione **[MPa]**; ```t``` -> premperatura **[°C]**; **NB: con ```as``` e ```rs``` si potrà fornire solo la pressione come primo dato di ingresso!**
+```<Dato1>```: 
+```p``` -> pressione **[MPa]**; ```t``` -> premperatura **[°C]**; **NB: con ```as``` e ```rs``` si potrà fornire solo la pressione come primo dato di ingresso!**
 
 ```<Dato2>```: ```p``` -> pressione **[MPa]**; ```t``` -> premperatura **[°C]**; ```h``` -> entalpia **[kj/kg]**; ```s``` -> entropia **[kj/kg\*k]**  
 
-```v``` -> volume specifico **[m^3/kg]**; ```x``` -> titolo; **NB: con ```as``` e ```rs``` è NON è possibile fornire la pressione e il titolo come secondo dato!** 
+```u``` -> energia interna **[kj/kg]**; ```v``` -> volume specifico **[m^3/kg]**; ```x``` -> titolo; 
+
+**NB: con ```as``` e ```rs``` è NON è possibile fornire la pressione e il titolo come secondo dato!** 
 
 **NB:Se è necessario un solo dato per trovare la grandezza desiderata lasciare ```<Dato2>``` vuoto**
 
