@@ -3,18 +3,18 @@ import pandas as pd
 import os, re
 
 commandPattern1 = re.compile(r'''(^f:(a|r)
-                                \so:(hl|hv|sl|sv|vl|vv|ps|ts)
+                                \so:(hl|hv|sl|sv|vl|vv|ps|ts|ul|uv)
                                 \s(p|t):(-?(\d+(\.|\,))?\d+)$
                                 )''', re.VERBOSE)
 commandPattern2 = re.compile(r'''(^f:(a|r) #bifase fornendo titolo o titolo fornendo v/h/s
-                                \so:(h|s|v|x)
+                                \so:(h|s|v|x|u)
                                 \s(p|t):(-?(\d+(\.|\,))?\d+)
-                                \s(h|s|x|v):(-?(\d+(\.|\,))?\d+)
+                                \s(h|s|x|v|u):(-?(\d+(\.|\,))?\d+)
                                 )''', re.VERBOSE)
 commandPattern3 = re.compile(r'''(^f:(as|rs)
-                                \so:(h|s|v|t)
+                                \so:(h|s|v|t|u)
                                 \sp:(-?(\d+(\.|\,))?\d+)
-                                \s(t|h|s|v):(-?(\d+(\.|\,))?\d+)
+                                \s(t|h|s|v|u):(-?(\d+(\.|\,))?\d+)
                                 )''', re.VERBOSE)
 
 firstDataPattern = re.compile(r'(p|t):(-?(\d+(\.|\,))?\d+)')
@@ -37,6 +37,8 @@ def unit(par):
         return '[°C]'
     if par == 'v'or par == 'vl'or par == 'vv' :
         return '[m^3/kg]'
+    if par == 'u'or par == 'ul'or par == 'uv' :
+        return '[kj/kg]'
     if par == 'x' :
         return ''
     return ''
@@ -88,6 +90,8 @@ def getOperands(operation):
         return ['sl', 'svl']
     if(operation == 'v'):
         return ['vl', 'vvl']
+    if(operation == 'u'):
+        return ['ul', 'uvl']
 
 def getPressureFormat(pressure):
     if(len(pressure) == 5):
@@ -135,11 +139,15 @@ def interpolation(table, fluid, pressure, operation, typeOfSecondData, secondDat
     smaller = table.loc[table[typeOfSecondData] == table[typeOfSecondData][table[typeOfSecondData] < secondData].max()]
     greater = table.loc[table[typeOfSecondData] == table[typeOfSecondData][table[typeOfSecondData] > secondData].min()]
     if(smaller.empty or greater.empty):
-        print(typeOfSecondData + ' è fuori range!')
+        print(typeOfSecondData + ' potrebbe essere troppo piccola e quindi il fluido è in stato BIFASE!')
         print('-' * os.get_terminal_size().columns)
-        print('Ecco il range di ' + typeOfSecondData + ' disponibile nella tabella '+ fluid + 'a p =' + pressure +'[MPa]:')
-        print(table[typeOfSecondData])
+        print('Ecco la riga corrispondente alla temperatura di saturazione a p =' + pressure +'[MPa]:')
+        print(table.head(1))
         print('-' * os.get_terminal_size().columns)
+        print('Oppure ' + typeOfSecondData + ' è troppo grande e non rientra in tabella!')
+        print('-' * os.get_terminal_size().columns)
+        print('Ecco l\'ultima riga a p =' + pressure +'[MPa]:')
+        print(table.tail(1))
         return None
     else:
         print('-' * os.get_terminal_size().columns)
@@ -166,14 +174,18 @@ def help():
     print('Valori accettabili:')
     print('<Fluido> : a -> acqua satura; as -> acqua surriscaldata; r -> R134a saturo; rs -> R14a surriscaldato')
     print('<Incognita> :\n'+
-    'h -> entalpia(bifase o surriscaldato); hl -> entalpia licquido saturo; hv -> entalpia vapore saturo\n' +
-    's -> entropia(bifase o surriscaldato); sl -> entropia liquido saturo; sv -> entropia vapore saturo\n' + 
-    'v -> volume specifico(bifase o surriscaldato); vl -> volume specifico liquido saturo; vv -> volume specifico vapore saturo\n' + 
+    'h -> entalpia; hl -> entalpia licquido saturo; hv -> entalpia vapore saturo\n' +
+    's -> entropia; sl -> entropia liquido saturo; sv -> entropia vapore saturo\n' + 
+    'v -> volume specifico; vl -> volume specifico liquido saturo; vv -> volume specifico vapore saturo\n' + 
+    'u -> energia interna; ul -> energia interna liquido saturo; uv -> energina interna vapore saturo\n' +
     'x -> titolo di vapore; ts -> temperatura di saturazione; ps -> pressione di saturazione')
     print('Per <Dato1> e <Dato2> inserire la lettera corrispondente alla grandezza seguito dal valore numerico\n')
-    print('<Dato1>: p -> pressione [MPa]; t -> premperatura [°C]; NB: con as e rs si potrà fornire solo la pressione come primo dato di ingresso!')
-    print('<Dato2>: p -> pressione [MPa]; t -> premperatura [°C]; h -> entalpia [kj/kg]; s -> entropia [kj/kg*k]\n' + 
-    'v -> volume specifico [m^3/kg]; x -> titolo; NB: con as e rs è NON è possibile fornire la pressione e il titolo come secondo dato!')
+    print('<Dato1>: \n' + 
+    'p -> pressione [MPa]; t -> premperatura [°C]; NB: con as e rs si potrà fornire solo la pressione come primo dato di ingresso!')
+    print('<Dato2>: \n'+
+    'p -> pressione [MPa]; t -> premperatura [°C]; h -> entalpia [kj/kg]; s -> entropia [kj/kg*k]\n' + 
+    'u -> energina interna [kj/kg]; v -> volume specifico [m^3/kg]; x -> titolo;\n' + 
+    'NB: con as e rs è NON è possibile fornire la pressione e il titolo come secondo dato!')
     print('-' * os.get_terminal_size().columns)
     print('Esempi:')
     print('<Fluido>:a <Incognita>:hl <Dato1>:t20    -> ottengo entalpia di liquido saturo dell\'acqua a 20[°C]')
@@ -250,17 +262,18 @@ def fetch(entries):
             print('La ' + typeOfFirstData + ' inserita non c\'è nelle tabelle!')
             print('-' * os.get_terminal_size().columns)
         else:
-            if((operation == 'h' or operation == 's' or operation == 'v') and typeOfSecondData == 'x'):
+            if((operation == 'h' or operation == 's' or operation == 'v' or operation == 'u') and typeOfSecondData == 'x'):
 
                 result = findVHS(secondData, row, fluid, typeOfFirstData, operation)
 
-            elif(operation == 'x' and (typeOfSecondData == 'h' or typeOfSecondData == 's' or typeOfSecondData == 'v')):
+            elif(operation == 'x' and (typeOfSecondData == 'h' or typeOfSecondData == 's' or typeOfSecondData == 'v' or typeOfSecondData == 'u')):
 
                 result = findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, operation)
 
-            elif((operation == 'h' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'h') or 
-            (operation == 'v' and typeOfSecondData == 's') or (operation == 's' and typeOfSecondData == 'v') or
-            (operation == 'h' and typeOfSecondData == 'v') or (operation == 'v' and typeOfSecondData == 'h')):
+            elif((operation == 'h' and (typeOfSecondData == 'v' or typeOfSecondData == 's' or typeOfSecondData == 'u')) or
+            (operation == 's' and (typeOfSecondData == 'v' or typeOfSecondData == 'h' or typeOfSecondData == 'u')) or
+            (operation == 'v' and (typeOfSecondData == 'h' or typeOfSecondData == 's' or typeOfSecondData == 'u')) or
+            (operation == 'u' and (typeOfSecondData == 'v' or typeOfSecondData == 's' or typeOfSecondData == 'h'))):
 
                 print('Calcolo il titolo con '+ typeOfSecondData +' :')
                 titolo = findTitolo(typeOfSecondData, secondData, row, fluid, typeOfFirstData, 'x')
